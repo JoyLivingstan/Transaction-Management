@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Transaction App</title>
+    <script src="https://unpkg.com/react/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const TransactionApp = () => {
+            const [transactions, setTransactions] = useState([]);
+            const [amount, setAmount] = useState('');
+            const [transactionType, setTransactionType] = useState('');
+            const [status, setStatus] = useState('PENDING');
+            const [user, setUser] = useState('');
+
+            useEffect(() => {
+                fetchTransactions();
+            }, []);
+
+            const fetchTransactions = async () => {
+                const response = await fetch('/api/transactions');
+                const data = await response.json();
+                setTransactions(data);
+            };
+
+            const addTransaction = async () => {
+                const newTransaction = {
+                    amount: parseFloat(amount),
+                    transaction_type: transactionType,
+                    status: status,
+                    user: parseInt(user),
+                    timestamp: new Date().toISOString()
+                };
+
+                const response = await fetch('/api/transactions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newTransaction)
+                });
+
+                if (response.ok) {
+                    fetchTransactions();
+                    setAmount('');
+                    setTransactionType('');
+                    setStatus('PENDING');
+                    setUser('');
+                }
+            };
+
+            return (
+                <div className="container mx-auto p-4">
+                    <h1 className="text-2xl font-bold mb-4">Transaction App</h1>
+                    <div className="mb-4">
+                        <input
+                            type="number"
+                            placeholder="Amount"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            className="border p-2 mr-2"
+                        />
+                        <input
+                            type="text"
+                            placeholder="Transaction Type"
+                            value={transactionType}
+                            onChange={(e) => setTransactionType(e.target.value)}
+                            className="border p-2 mr-2"
+                        />
+                        <input
+                            type="text"
+                            placeholder="Status"
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value)}
+                            className="border p-2 mr-2"
+                        />
+                        <input
+                            type="number"
+                            placeholder="User ID"
+                            value={user}
+                            onChange={(e) => setUser(e.target.value)}
+                            className="border p-2 mr-2"
+                        />
+                        <button
+                            onClick={addTransaction}
+                            className="bg-blue-500 text-white p-2"
+                        >
+                            Add Transaction
+                        </button>
+                    </div>
+                    <table className="min-w-full bg-white">
+                        <thead>
+                            <tr>
+                                <th className="py-2">ID</th>
+                                <th className="py-2">Amount</th>
+                                <th className="py-2">Type</th>
+                                <th className="py-2">Status</th>
+                                <th className="py-2">User</th>
+                                <th className="py-2">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {transactions.map((transaction) => (
+                                <tr key={transaction.transaction_id}>
+                                    <td className="border px-4 py-2">{transaction.transaction_id}</td>
+                                    <td className="border px-4 py-2">{transaction.amount}</td>
+                                    <td className="border px-4 py-2">{transaction.transaction_type}</td>
+                                    <td className="border px-4 py-2">{transaction.status}</td>
+                                    <td className="border px-4 py-2">{transaction.user}</td>
+                                    <td className="border px-4 py-2">{new Date(transaction.timestamp).toLocaleString()}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<TransactionApp />, document.getElementById('root'));
+    </script>
+</body>
+
+</html>
